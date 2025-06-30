@@ -1,14 +1,23 @@
+local term_win = nil  -- Speichert das Fenster mit dem Terminal
+
 vim.api.nvim_create_user_command('VspCmdRun', function()
-  local filepath = vim.fn.expand('%:p')  -- Absoluter Pfad zur aktuellen Datei
-  local cmd_output = vim.fn.systemlist('python3 ' .. vim.fn.shellescape(filepath))
+  local filepath = vim.fn.expand('%:p')
+  local current_win = vim.api.nvim_get_current_win()
 
-  vim.cmd('vnew')  -- neues vertikales Fenster mit leerem Buffer
-  vim.api.nvim_buf_set_lines(0, 0, -1, false, cmd_output)
+  -- Vorheriges Terminal-Fenster schließen, falls vorhanden
+  if term_win and vim.api.nvim_win_is_valid(term_win) then
+    vim.api.nvim_win_close(term_win, true)
+    term_win = nil
+  end
 
-  vim.bo.buftype = 'nofile'
-  vim.bo.bufhidden = 'wipe'
-  vim.bo.swapfile = false
+  -- Neues vertikales Split-Terminal öffnen
+  vim.cmd('vsplit')
+  vim.cmd('terminal python3 ' .. vim.fn.shellescape(filepath))
 
-  vim.cmd('wincmd p')  -- zurück zum vorherigen Fenster
+  -- Aktuelles Fenster (das Terminal) merken
+  term_win = vim.api.nvim_get_current_win()
+
+  -- Zurück zum ursprünglichen Fenster
+  vim.api.nvim_set_current_win(current_win)
 end, {})
 
